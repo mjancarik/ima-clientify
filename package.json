@@ -1,0 +1,37 @@
+{
+	"name": "ima-clientify",
+	"version": "0.0.1",
+	"description": "Browserify transform for ima server files",
+	"main": "index.js",
+	"scripts": {
+		"lint": "node_modules/.bin/eslint -c ./.eslintrc.js --fix './**/*.js' --ignore-path ./.prettierignore",
+		"preversion": "npm run lint",
+		"postversion": "git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
+	},
+	"keywords": [
+		"IMA",
+		"IMA.js",
+		"browserify",
+		"clientify"
+	],
+	"author": "Miroslav Jancarik",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mjancarik/ima-clientify.git"
+	},
+	"bugs": {
+		"url": "https://github.com/mjancarik/ima-clientify/issues"
+	},
+	"publishConfig": {
+		"registry": "http://registry.npmjs.org/"
+	},
+	"license": "MIT",
+	"devDependencies": {
+		"babel-eslint": "^8.0.2",
+		"eslint": "^4.10.0",
+		"eslint-config-last": "^0.0.3",
+		"eslint-config-prettier": "^2.7.0",
+		"eslint-plugin-prettier": "^2.3.1",
+		"prettier": "^1.8.2"
+	}
+}
