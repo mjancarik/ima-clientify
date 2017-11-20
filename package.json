@@ -1,6 +1,6 @@
 {
 	"name": "ima-clientify",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Browserify transform for ima server files",
 	"main": "index.js",
 	"scripts": {
