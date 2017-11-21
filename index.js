@@ -41,6 +41,10 @@ class Clientify extends Transform {
             .replace(VARIABLE, () => {
               variableKey += 1;
 
+              if (!variables || !variables[variableKey]) {
+                return '';
+              }
+
               return variables[variableKey];
             })
             .replace(CLEAR, '((.|\n)*)');
