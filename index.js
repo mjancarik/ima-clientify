@@ -4,13 +4,54 @@ const SERVER_SIDE = '@server-side';
 const VARIABLE = '__VARIABLE__';
 const CLEAR = '__CLEAR__';
 
-class Clientify extends Transform {
+const SERVER_SIDE_DETECTOR = new RegExp(`${SERVER_SIDE}(.*)\n`, 'g');
+
+function clientify(content) {
+  if (SERVER_SIDE_DETECTOR.test(content)) {
+    let rules = content.match(SERVER_SIDE_DETECTOR);
+
+    rules.forEach(rule => {
+      content = content.replace(rule, '');
+
+      let regPattern = rule.replace(`${SERVER_SIDE} `, '').replace('\n', '');
+
+      let variablePattern = regPattern
+        .replace(VARIABLE, '(.*)')
+        .replace(CLEAR, '(?:(?:.|\n)*)');
+
+      const variables = content.match(variablePattern);
+      let variableKey = 0;
+
+      let clearablePattern = regPattern
+        .replace(VARIABLE, () => {
+          variableKey += 1;
+
+          if (!variables || !variables[variableKey]) {
+            return '';
+          }
+
+          return variables[variableKey];
+        })
+        .replace(CLEAR, '((.|\n)*)');
+
+      let clearingParts = content.match(clearablePattern);
+
+      if (clearingParts) {
+        clearingParts.slice(1).forEach(part => {
+          content = content.replace(part, '');
+        });
+      }
+    });
+  }
+
+  return content;
+}
+
+class ClientifyStream extends Transform {
   constructor(filename, options) {
     super(options);
     this._data = '';
     this._filename = filename;
-
-    this._server = new RegExp(`${SERVER_SIDE}(.*)\n`, 'g');
   }
 
   _transform(buf, enc, callback) {
@@ -20,46 +61,9 @@ class Clientify extends Transform {
 
   _flush(callback) {
     try {
-      if (this._server.test(this._data)) {
-        let rules = this._data.match(this._server);
+      let content = clientify(this._data);
 
-        rules.forEach(rule => {
-          this._data = this._data.replace(rule, '');
-
-          let regPattern = rule
-            .replace(`${SERVER_SIDE} `, '')
-            .replace('\n', '');
-
-          let variablePattern = regPattern
-            .replace(VARIABLE, '(.*)')
-            .replace(CLEAR, '(?:(?:.|\n)*)');
-
-          const variables = this._data.match(variablePattern);
-          let variableKey = 0;
-
-          let clearablePattern = regPattern
-            .replace(VARIABLE, () => {
-              variableKey += 1;
-
-              if (!variables || !variables[variableKey]) {
-                return '';
-              }
-
-              return variables[variableKey];
-            })
-            .replace(CLEAR, '((.|\n)*)');
-
-          let clearingParts = this._data.match(clearablePattern);
-
-          if (clearingParts) {
-            clearingParts.slice(1).forEach(part => {
-              this._data = this._data.replace(part, '');
-            });
-          }
-        });
-      }
-
-      this.push(this._data);
+      this.push(content);
     } catch (err) {
       this.emit('error', err);
       return;
@@ -68,4 +72,5 @@ class Clientify extends Transform {
   }
 }
 
-module.exports = (...rest) => new Clientify(...rest);
+module.exports = (...rest) => new ClientifyStream(...rest);
+module.exports.clientify = clientify;
